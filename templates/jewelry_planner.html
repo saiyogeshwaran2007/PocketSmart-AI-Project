@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jewelry Budget Planner - PocketSmart AI</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="/dashboard" class="nav-brand">
+      <i class="fa-solid fa-wallet text-sky-400"></i> Pocket<span class="logo-highlight">Smart</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+      <li><a href="/home-planner"><i class="fa-solid fa-house"></i> Home Planner</a></li>
+      <li><a href="/party-planner"><i class="fa-solid fa-champagne-glasses"></i> Party Planner</a></li>
+      <li><a href="/jewelry-planner" class="active"><i class="fa-solid fa-gem"></i> Jewelry Planner</a></li>
+      <li><a href="/history"><i class="fa-solid fa-clock-rotate-left"></i> History</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="user-badge">
+        <div class="user-avatar">{{ user.username[0]|upper }}</div>
+        <span>{{ user.username }}</span>
+      </div>
+      <form action="/logout" method="POST" style="margin: 0;">
+        <button type="submit" class="btn-nav-outline" style="cursor: pointer;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </form>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="form-page-header" style="background: linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);">
+    <h1>Jewelry Budget Planner</h1>
+    <p>Get AI-powered jewelry recommendations within your budget for any occasion</p>
+  </header>
+
+  <!-- Form Container -->
+  <div class="form-wrapper">
+    <div class="form-card">
+      <form id="jewelryPlannerForm">
+        
+        <!-- Budget Details -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-indian-rupee-sign"></i> Budget Details
+          </div>
+          <div class="form-group">
+            <label for="totalBudget">Total Budget (₹)</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-wallet"></i>
+              <input type="number" id="totalBudget" name="totalBudget" class="form-control" placeholder="e.g. 15000" value="15000" min="500" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Occasion & Preferences -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Occasion & Preferences
+          </div>
+          <div class="form-group">
+            <label for="occasion"><i class="fa-solid fa-cake-candles"></i> Occasion</label>
+            <input type="text" id="occasion" name="occasion" class="form-control" placeholder="e.g. Wedding, Birthday, Cocktail Party, Festive" value="Birthday" required>
+          </div>
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="preferences"><i class="fa-solid fa-palette"></i> Style Preferences</label>
+            <textarea id="preferences" name="preferences" class="form-control" placeholder="Describe your style preferences, metals (gold/silver/rose gold), gemstones, minimal vs bold..."></textarea>
+          </div>
+        </div>
+
+        <!-- Upload Outfit Image -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-image"></i> Upload Outfit Image (Optional Multimodal Analysis)
+          </div>
+          <div class="upload-zone" id="uploadZone">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <p>Drag and drop your outfit image here, or <span>browse file</span></p>
+            <input type="file" id="outfitImage" name="image" accept="image/*" style="display: none;">
+          </div>
+          <div class="image-preview-container" id="imagePreviewContainer">
+            <button type="button" class="btn-remove-img" id="btnRemoveImg">Remove Image</button>
+            <img id="imagePreview" class="image-preview" src="#" alt="Outfit Preview">
+          </div>
+        </div>
+
+        <button type="submit" id="btnGenerate" class="btn-submit-action">
+          <span id="btnGenText"><i class="fa-solid fa-wand-magic-sparkles"></i> Get Recommendations</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Recommendations Display Container -->
+    <div id="resultsContainer" class="results-container">
+      <div class="results-header-banner">
+        <div>
+          <div style="font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">AI Multimodal Match</div>
+          <h2 class="results-title">Your Personalized Jewelry Recommendations</h2>
+        </div>
+        <div class="budget-stats">
+          <div class="stat-chip total">
+            Total Budget: <strong id="resTotalBudget">₹0</strong>
+          </div>
+          <div class="stat-chip positive">
+            Remaining Budget: <strong id="resRemainingBudget">₹0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outfit Analysis Card (if image provided or detected) -->
+      <div id="outfitAnalysisCard" class="outfit-analysis-card" style="display: none;">
+        <div class="outfit-analysis-title">
+          <i class="fa-solid fa-shirt"></i> Outfit Analysis:
+        </div>
+        <div>
+          <strong>Colors:</strong> <span id="outfitColors" class="analysis-tag">Blue, White</span>
+        </div>
+        <div>
+          <strong>Style:</strong> <span id="outfitStyle" class="analysis-tag">Casual</span>
+        </div>
+        <div>
+          <strong>Formality:</strong> <span id="outfitFormality" class="analysis-tag">Informal</span>
+        </div>
+      </div>
+
+      <!-- Jewelry Recommendations Container -->
+      <div class="category-card">
+        <div class="category-card-header" style="background: linear-gradient(to right, #1e3a8a, #4338ca); color: #ffffff;">
+          <h4 style="color: #ffffff;"><i class="fa-solid fa-gem"></i> Curated Jewelry Pieces</h4>
+        </div>
+        <div id="jewelryListContainer" style="padding: 1.5rem;"></div>
+      </div>
+
+      <!-- Styling Tips Box -->
+      <div id="suggestionsBox" class="suggestions-box" style="background: #faf5ff; border-color: #e9d5ff;">
+        <h5 style="color: #6b21a8;"><i class="fa-solid fa-wand-sparkles"></i> AI Styling Tips</h5>
+        <ul id="stylingTipsList" style="color: #7e22ce;"></ul>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+        <button onclick="window.print()" class="btn-nav-outline" style="color: #1e3a8a; border-color: #cbd5e1; background: #ffffff;">
+          <i class="fa-solid fa-print"></i> Print / Save PDF
+        </button>
+        <a href="/history" class="btn-card-action" style="padding: 0.55rem 1.2rem; display: inline-block;">
+          View in History <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('jewelryPlannerForm');
+    const btnGenerate = document.getElementById('btnGenerate');
+    const btnGenText = document.getElementById('btnGenText');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const uploadZone = document.getElementById('uploadZone');
+    const outfitImageInput = document.getElementById('outfitImage');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const btnRemoveImg = document.getElementById('btnRemoveImg');
+
+    // Drag and Drop Image Handler
+    uploadZone.addEventListener('click', () => outfitImageInput.click());
+
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        outfitImageInput.files = e.dataTransfer.files;
+        showPreview(e.dataTransfer.files[0]);
+      }
+    });
+
+    outfitImageInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        showPreview(e.target.files[0]);
+      }
+    });
+
+    btnRemoveImg.addEventListener('click', () => {
+      outfitImageInput.value = '';
+      imagePreview.src = '#';
+      imagePreviewContainer.style.display = 'none';
+      uploadZone.style.display = 'block';
+    });
+
+    function showPreview(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        imagePreviewContainer.style.display = 'block';
+        uploadZone.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const totalBudget = document.getElementById('totalBudget').value;
+      const occasion = document.getElementById('occasion').value;
+      const preferences = document.getElementById('preferences').value;
+
+      btnGenerate.disabled = true;
+      btnGenText.innerHTML = '<span class="spinner"></span> Analyzing outfit colors & matching jewelry pieces...';
+
+      const formData = new FormData();
+      formData.append('total_budget', totalBudget);
+      formData.append('occasion', occasion);
+      if (preferences) formData.append('preferences', preferences);
+      if (outfitImageInput.files && outfitImageInput.files[0]) {
+        formData.append('image', outfitImageInput.files[0]);
+      }
+
+      try {
+        const response = await fetch('/generate-jewelry', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate jewelry recommendations');
+        }
+
+        const data = await response.json();
+        renderJewelryResults(data);
+
+        resultsContainer.style.display = 'block';
+        resultsContainer.scrollIntoView({ behavior: 'smooth' });
+
+      } catch (err) {
+        alert('Error generating jewelry recommendations: ' + err.message);
+      } finally {
+        btnGenerate.disabled = false;
+        btnGenText.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Get Recommendations';
+      }
+    });
+
+    function renderJewelryResults(data) {
+      document.getElementById('resTotalBudget').textContent = `₹${(data.total_budget || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+      document.getElementById('resRemainingBudget').textContent = `₹${(data.remaining_budget || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+
+      // Outfit Analysis Box
+      const analysisCard = document.getElementById('outfitAnalysisCard');
+      if (data.outfit_analysis) {
+        analysisCard.style.display = 'flex';
+        document.getElementById('outfitColors').textContent = data.outfit_analysis.colors || 'Harmonized';
+        document.getElementById('outfitStyle').textContent = data.outfit_analysis.style || 'Contemporary';
+        document.getElementById('outfitFormality').textContent = data.outfit_analysis.formality || 'Elevated';
+      } else {
+        analysisCard.style.display = 'none';
+      }
+
+      // Jewelry Items List
+      const listContainer = document.getElementById('jewelryListContainer');
+      listContainer.innerHTML = '';
+
+      (data.jewelry_recommendations || []).forEach(item => {
+        let linksHtml = '';
+        if (item.shopping_links) {
+          linksHtml = '<div class="shopping-links-grid" style="margin-top: 0.75rem;">';
+          for (const [platform, url] of Object.entries(item.shopping_links)) {
+            let icon = 'fa-gem';
+            if (platform === 'amazon') icon = 'fa-amazon';
+            else if (platform === 'flipkart') icon = 'fa-bag-shopping';
+            
+            const platformLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
+            linksHtml += `<a href="${url}" target="_blank" class="shop-btn ${platform}"><i class="fa-brands ${icon} fa-solid ${icon}"></i> ${platformLabel}</a>`;
+          }
+          linksHtml += '</div>';
+        }
+
+        const itemDiv = document.createElement('div');
+        itemDiv.style.cssText = 'padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 1.25rem; background: #ffffff;';
+        itemDiv.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-regular fa-circle-dot" style="color: #2563eb; font-size: 0.8rem;"></i> ${item.item_type}
+              </div>
+              <div style="color: #475569; font-size: 0.92rem; margin-top: 0.35rem; line-height: 1.5;">${item.description}</div>
+              ${item.style ? `<div style="font-size: 0.85rem; color: #6b21a8; margin-top: 0.35rem; font-weight: 600;">Style: ${item.style}</div>` : ''}
+            </div>
+            <div style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 1.1rem; font-weight: 800; padding: 0.4rem 1rem; border-radius: 8px; white-space: nowrap;">
+              ₹${(item.estimated_price || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+            </div>
+          </div>
+          <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed #e2e8f0;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;">Shop For This:</div>
+            ${linksHtml}
+          </div>
+        `;
+        listContainer.appendChild(itemDiv);
+      });
+
+      // Styling Tips
+      const tipsList = document.getElementById('stylingTipsList');
+      tipsList.innerHTML = '';
+      (data.styling_tips || []).forEach(tip => {
+        const li = document.createElement('li');
+        li.textContent = tip;
+        tipsList.appendChild(li);
+      });
+    }
+  </script>
+
+</body>
+</html>

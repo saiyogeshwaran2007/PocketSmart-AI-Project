@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Interior Budget Planner - PocketSmart AI</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="/dashboard" class="nav-brand">
+      <i class="fa-solid fa-wallet text-sky-400"></i> Pocket<span class="logo-highlight">Smart</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a></li>
+      <li><a href="/home-planner" class="active"><i class="fa-solid fa-house"></i> Home Planner</a></li>
+      <li><a href="/party-planner"><i class="fa-solid fa-champagne-glasses"></i> Party Planner</a></li>
+      <li><a href="/jewelry-planner"><i class="fa-solid fa-gem"></i> Jewelry Planner</a></li>
+      <li><a href="/history"><i class="fa-solid fa-clock-rotate-left"></i> History</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="user-badge">
+        <div class="user-avatar">{{ user.username[0]|upper }}</div>
+        <span>{{ user.username }}</span>
+      </div>
+      <form action="/logout" method="POST" style="margin: 0;">
+        <button type="submit" class="btn-nav-outline" style="cursor: pointer;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </form>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="form-page-header">
+    <h1>Home Interior Budget Planner</h1>
+    <p>Create a customized budget plan for your dream home interior</p>
+  </header>
+
+  <!-- Form Container -->
+  <div class="form-wrapper">
+    <div class="form-card">
+      <form id="homePlannerForm">
+        
+        <!-- Budget Details -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-indian-rupee-sign"></i> Budget Details
+          </div>
+          <div class="form-group">
+            <label for="totalBudget">Total Budget (₹)</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-wallet"></i>
+              <input type="number" id="totalBudget" name="totalBudget" class="form-control" placeholder="e.g. 50000" value="50000" min="100" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fixtures & Furniture -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-couch"></i> Fixtures & Furniture
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="numLights"><i class="fa-solid fa-lightbulb"></i> Number of Lights/Fixtures</label>
+              <input type="number" id="numLights" name="numLights" class="form-control" value="5" min="0">
+            </div>
+            <div class="form-group">
+              <label for="numFans"><i class="fa-solid fa-fan"></i> Number of Ceiling Fans</label>
+              <input type="number" id="numFans" name="numFans" class="form-control" value="4" min="0">
+            </div>
+            <div class="form-group">
+              <label for="numFurniture"><i class="fa-solid fa-chair"></i> Number of Furniture Pieces</label>
+              <input type="number" id="numFurniture" name="numFurniture" class="form-control" value="2" min="0">
+            </div>
+            <div class="form-group">
+              <label for="numDiningTables"><i class="fa-solid fa-utensils"></i> Number of Dining Tables</label>
+              <input type="number" id="numDiningTables" name="numDiningTables" class="form-control" value="1" min="0">
+            </div>
+          </div>
+        </div>
+
+        <!-- Rooms to Include -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-door-open"></i> Rooms to Include
+          </div>
+          <div class="checkbox-pills">
+            <label class="pill-checkbox">
+              <input type="checkbox" name="rooms" value="Living Room" checked>
+              <span class="pill-label"><i class="fa-solid fa-tv"></i> Living Room</span>
+            </label>
+            <label class="pill-checkbox">
+              <input type="checkbox" name="rooms" value="Kitchen" checked>
+              <span class="pill-label"><i class="fa-solid fa-kitchen-set"></i> Kitchen</span>
+            </label>
+            <label class="pill-checkbox">
+              <input type="checkbox" name="rooms" value="Bedroom" checked>
+              <span class="pill-label"><i class="fa-solid fa-bed"></i> Bedroom</span>
+            </label>
+            <label class="pill-checkbox">
+              <input type="checkbox" name="rooms" value="Balcony">
+              <span class="pill-label"><i class="fa-solid fa-plant-wilt"></i> Balcony</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <i class="fa-solid fa-circle-info"></i> Additional Information
+          </div>
+          <div class="form-group">
+            <label for="additionalRequirements">Special Requirements or Preferences</label>
+            <textarea id="additionalRequirements" name="additionalRequirements" class="form-control" placeholder="Any specific requirements, aesthetic preferences, modern/rustic style, colors..."></textarea>
+          </div>
+        </div>
+
+        <button type="submit" id="btnGenerate" class="btn-submit-action">
+          <span id="btnGenText"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Recommendations</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Recommendations Display Container -->
+    <div id="resultsContainer" class="results-container">
+      <div class="results-header-banner">
+        <div>
+          <div style="font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">AI Optimization Result</div>
+          <h2 class="results-title">Your Personalized Home Budget Plan</h2>
+        </div>
+        <div class="budget-stats">
+          <div class="stat-chip total">
+            Total Budget: <strong id="resTotalBudget">₹0</strong>
+          </div>
+          <div class="stat-chip positive">
+            Remaining Budget: <strong id="resRemainingBudget">₹0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories & Products Container -->
+      <div id="categoriesContainer"></div>
+
+      <!-- Calculation Summary Table -->
+      <div class="category-card" style="margin-top: 1.5rem;">
+        <div class="category-card-header">
+          <h4><i class="fa-solid fa-calculator text-blue-600"></i> Budget Allocation Summary</h4>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Items Count</th>
+                <th>Total Cost</th>
+                <th>% of Budget</th>
+              </tr>
+            </thead>
+            <tbody id="calculationTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Additional Suggestions Box -->
+      <div id="suggestionsBox" class="suggestions-box">
+        <h5><i class="fa-solid fa-lightbulb"></i> Additional Suggestions & Smart Tips</h5>
+        <ul id="suggestionsList"></ul>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+        <button onclick="window.print()" class="btn-nav-outline" style="color: #1e3a8a; border-color: #cbd5e1; background: #ffffff;">
+          <i class="fa-solid fa-print"></i> Print / Save PDF
+        </button>
+        <a href="/history" class="btn-card-action" style="padding: 0.55rem 1.2rem; display: inline-block;">
+          View in History <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('homePlannerForm');
+    const btnGenerate = document.getElementById('btnGenerate');
+    const btnGenText = document.getElementById('btnGenText');
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const totalBudget = parseFloat(document.getElementById('totalBudget').value) || 0;
+      const numLights = parseInt(document.getElementById('numLights').value) || 0;
+      const numFans = parseInt(document.getElementById('numFans').value) || 0;
+      const numFurniture = parseInt(document.getElementById('numFurniture').value) || 0;
+      const numDiningTables = parseInt(document.getElementById('numDiningTables').value) || 0;
+      const additionalRequirements = document.getElementById('additionalRequirements').value;
+
+      const checkedRooms = Array.from(document.querySelectorAll('input[name="rooms"]:checked')).map(cb => cb.value);
+
+      btnGenerate.disabled = true;
+      btnGenText.innerHTML = '<span class="spinner"></span> AI is analyzing and curating recommendations...';
+
+      try {
+        const response = await fetch('/generate-home', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            total_budget: totalBudget,
+            num_lights: numLights,
+            num_fans: numFans,
+            num_furniture: numFurniture,
+            num_dining_tables: numDiningTables,
+            rooms: checkedRooms,
+            additional_requirements: additionalRequirements
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate recommendations');
+        }
+
+        const data = await response.json();
+        renderResults(data);
+
+        resultsContainer.style.display = 'block';
+        resultsContainer.scrollIntoView({ behavior: 'smooth' });
+
+      } catch (err) {
+        alert('Error generating recommendations: ' + err.message);
+      } finally {
+        btnGenerate.disabled = false;
+        btnGenText.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Recommendations';
+      }
+    });
+
+    function renderResults(data) {
+      document.getElementById('resTotalBudget').textContent = `₹${(data.total_budget || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+      document.getElementById('resRemainingBudget').textContent = `₹${(data.remaining_budget || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+
+      const catContainer = document.getElementById('categoriesContainer');
+      catContainer.innerHTML = '';
+
+      (data.budget_breakdown || []).forEach(cat => {
+        const card = document.createElement('div');
+        card.className = 'category-card';
+
+        let itemsHtml = '';
+        (cat.items || []).forEach(item => {
+          let linksHtml = '';
+          if (item.shopping_links) {
+            linksHtml = `
+              <div class="shopping-links-grid">
+                ${item.shopping_links.amazon ? `<a href="${item.shopping_links.amazon}" target="_blank" class="shop-btn amazon"><i class="fa-brands fa-amazon"></i> Amazon</a>` : ''}
+                ${item.shopping_links.flipkart ? `<a href="${item.shopping_links.flipkart}" target="_blank" class="shop-btn flipkart"><i class="fa-solid fa-bag-shopping"></i> Flipkart</a>` : ''}
+                ${item.shopping_links.ikea ? `<a href="${item.shopping_links.ikea}" target="_blank" class="shop-btn ikea"><i class="fa-solid fa-couch"></i> IKEA</a>` : ''}
+                ${item.shopping_links.myntra ? `<a href="${item.shopping_links.myntra}" target="_blank" class="shop-btn myntra"><i class="fa-solid fa-shirt"></i> Myntra</a>` : ''}
+                ${item.shopping_links.ajio ? `<a href="${item.shopping_links.ajio}" target="_blank" class="shop-btn ajio"><i class="fa-solid fa-tags"></i> Ajio</a>` : ''}
+              </div>
+            `;
+          }
+
+          itemsHtml += `
+            <tr>
+              <td>
+                <div class="item-name">${item.name}</div>
+                <div class="item-desc">${item.description || ''}</div>
+              </td>
+              <td class="item-price">₹${(item.estimated_price || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+              <td><span style="background:#f1f5f9; padding:2px 8px; border-radius:4px; font-weight:600;">${item.quantity || 1}</span></td>
+              <td>${linksHtml}</td>
+            </tr>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="category-card-header">
+            <h4><i class="fa-solid fa-layer-group" style="color:#2563eb;"></i> ${cat.category.replace('_', ' ').toUpperCase()}</h4>
+            <span class="category-allocation-badge">Allocated: ₹${(cat.allocation || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 38%;">Item & Description</th>
+                  <th style="width: 16%;">Est. Price</th>
+                  <th style="width: 10%;">Qty</th>
+                  <th style="width: 36%;">Shopping Links</th>
+                </tr>
+              </thead>
+              <tbody>${itemsHtml}</tbody>
+            </table>
+          </div>
+        `;
+        catContainer.appendChild(card);
+      });
+
+      // Render Calculation Summary Table
+      const tbody = document.getElementById('calculationTableBody');
+      tbody.innerHTML = '';
+      (data.calculation_table || []).forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-weight:600; color:#1e293b;">${row.category}</td>
+          <td>${row.items_count}</td>
+          <td style="font-weight:700;">₹${(row.total_cost || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="flex:1; background:#e2e8f0; height:8px; border-radius:4px; overflow:hidden;">
+                <div style="width:${Math.min(row.percentage_of_budget, 100)}%; background:#2563eb; height:100%;"></div>
+              </div>
+              <span style="font-size:0.85rem; font-weight:600;">${row.percentage_of_budget}%</span>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Render Suggestions
+      const suggestionsList = document.getElementById('suggestionsList');
+      suggestionsList.innerHTML = '';
+      (data.additional_suggestions || []).forEach(sug => {
+        const li = document.createElement('li');
+        li.textContent = sug;
+        suggestionsList.appendChild(li);
+      });
+    }
+  </script>
+
+</body>
+</html>
